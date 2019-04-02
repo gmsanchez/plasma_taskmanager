@@ -256,6 +256,95 @@ PlasmaComponents.ContextMenu {
     }
 
     PlasmaComponents.MenuItem {
+      id : windowGroup
+      visible : menu.visualParent.childCount > 1
+      text: i18n("Windows List")
+
+      data: [
+          VisualDataModel {
+              id: groupFilter
+
+              delegate: Task {
+                  visible: true
+                  inPopup: true
+              }
+          }
+      ]
+
+      TaskList {
+          id: taskList
+
+          width: parent.width
+
+          add: Transition {
+              // We trigger a null-interval timer in the first add
+              // transition after setting the model so onTriggered
+              // will run after the Flow has positioned items.
+
+              ScriptAction {
+                  script: {
+                      if (groupRepeater.aboutToPopulate) {
+                          focusActiveTaskTimer.restart();
+                          groupRepeater.aboutToPopulate = false;
+                      }
+                  }
+              }
+          }
+
+          onAnimatingChanged: {
+              if (!animating) {
+                  Qt.callLater(updateSize);
+              }
+          }
+
+          Repeater {
+              id: groupRepeater
+
+              property bool aboutToPopulate: false
+
+              function currentIndex() {
+                  for (var i = 0; i < count; ++i) {
+                      if (itemAt(i).activeFocus) {
+                          return i;
+                      }
+                  }
+
+                  return -1;
+              }
+
+              onItemAdded: Qt.callLater(updateSize)
+
+              onItemRemoved: {
+                  if (groupDialog.visible && index > 0 && index == count) {
+                      Qt.callLater(updateSize);
+                  }
+              }
+          }
+      }
+
+      PlasmaComponents.ContextMenu {
+        id: windowGroupMenu
+        visualParent: windowGroup.action
+
+        function refresh() {
+          groupFilter.model = tasksModel;
+          groupFilter.rootIndex = tasksModel.makeModelIndex(menu.visualParent.itemIndex);
+          groupRepeater.model = groupFilter;
+          for (var i = 0; i < taskList.children.length - 1; ++i) {
+            var _task = taskList.children[i];
+            var menuItem = menu.newMenuItem(windowGroupMenu);
+            menuItem.text = _task.labelText;
+          }
+        }
+        Component.onCompleted: refresh()
+      }
+    }
+
+    PlasmaComponents.MenuItem {
+        separator: true
+    }
+
+    PlasmaComponents.MenuItem {
         id: virtualDesktopsMenuItem
 
         visible: virtualDesktopInfo.numberOfDesktops > 1
