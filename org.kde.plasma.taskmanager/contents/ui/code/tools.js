@@ -103,8 +103,12 @@ function activateTask(index, model, modifiers, task) {
         } else if (groupDialog.visible) {
             groupDialog.visible = false;
         } else {
-            groupDialog.visualParent = task;
-            groupDialog.visible = true;
+            if (groupDialog.activeTask) {
+              tasksModel.requestActivate(groupDialog.activeTask);
+            } else {
+              groupDialog.visualParent = task;
+              groupDialog.visible = true;
+            }
         }
     } else {
         if (model.IsMinimized === true) {
