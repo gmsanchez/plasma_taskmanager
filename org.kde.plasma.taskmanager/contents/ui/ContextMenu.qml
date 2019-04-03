@@ -330,10 +330,16 @@ PlasmaComponents.ContextMenu {
           groupFilter.model = tasksModel;
           groupFilter.rootIndex = tasksModel.makeModelIndex(menu.visualParent.itemIndex);
           groupRepeater.model = groupFilter;
+          var menuItem
           for (var i = 0; i < taskList.children.length - 1; ++i) {
-            var _task = taskList.children[i];
-            var menuItem = menu.newMenuItem(windowGroupMenu);
-            menuItem.text = _task.labelText;
+            // var _task = taskList.children[i];
+            menuItem = menu.newMenuItem(windowGroupMenu);
+            menuItem.text = taskList.children[i].labelText;
+            menuItem.clicked.connect((function(i) {
+              // return function() { return print(taskList.children[i].labelText); };
+              return function() { return tasksModel.requestActivate(tasksModel.makeModelIndex(menu.visualParent.itemIndex, taskList.children[i].itemIndex)); };
+              //return function() { return print(_task.labelText); };
+            })(i));
           }
         }
         Component.onCompleted: refresh()
