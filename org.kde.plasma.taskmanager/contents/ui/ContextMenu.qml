@@ -335,6 +335,27 @@ PlasmaComponents.ContextMenu {
             // var _task = taskList.children[i];
             menuItem = menu.newMenuItem(windowGroupMenu);
             menuItem.text = taskList.children[i].labelText;
+
+            // QMenu does not limit its width automatically. Even if we set a maximumWidth
+            // it would just cut off text rather than eliding. So we do this manually.
+            var textMetrics = Qt.createQmlObject("import QtQuick 2.4; TextMetrics {}", menu);
+            var maximumWidth = LayoutManager.maximumContextMenuTextWidth();
+
+            // Crude way of manually eliding...
+            var elided = false;
+            textMetrics.text = Qt.binding(function() {
+                return menuItem.action.text;
+            });
+
+            while (textMetrics.width > maximumWidth) {
+                menuItem.action.text = menuItem.action.text.slice(0, -1);
+                elided = true;
+            }
+
+            if (elided) {
+                menuItem.action.text += "...";
+            }
+
             menuItem.clicked.connect((function(i) {
               // return function() { return print(taskList.children[i].labelText); };
               return function() { return tasksModel.requestActivate(tasksModel.makeModelIndex(menu.visualParent.itemIndex, taskList.children[i].itemIndex)); };
