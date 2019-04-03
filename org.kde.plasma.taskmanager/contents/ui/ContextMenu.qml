@@ -76,6 +76,7 @@ PlasmaComponents.ContextMenu {
     }
 
     function show() {
+        loopedMenuItems();
         loadDynamicLaunchActions(get(atm.LauncherUrlWithoutIcon));
         openRelative();
     }
@@ -92,6 +93,47 @@ PlasmaComponents.ContextMenu {
             "import org.kde.plasma.components 2.0 as PlasmaComponents;" +
             "PlasmaComponents.MenuItem { separator: true }",
             parent);
+    }
+
+    function loopedMenuItems() {
+      if (menu.visualParent.childCount > 1) {
+        groupFilter.model = tasksModel;
+        groupFilter.rootIndex = tasksModel.makeModelIndex(menu.visualParent.itemIndex);
+        groupRepeater.model = groupFilter;
+        var menuItem
+        for (var i = 0; i < taskList.children.length - 1; ++i) {
+          // var _task = taskList.children[i];
+          menuItem = menu.newMenuItem(windowGroup);
+          menuItem.text = taskList.children[i].labelText;
+
+          // QMenu does not limit its width automatically. Even if we set a maximumWidth
+          // it would just cut off text rather than eliding. So we do this manually.
+          var textMetrics = Qt.createQmlObject("import QtQuick 2.4; TextMetrics {}", menu);
+          var maximumWidth = LayoutManager.maximumContextMenuTextWidth();
+
+          // Crude way of manually eliding...
+          var elided = false;
+          textMetrics.text = Qt.binding(function() {
+              return menuItem.action.text;
+          });
+
+          while (textMetrics.width > maximumWidth) {
+              menuItem.action.text = menuItem.action.text.slice(0, -1);
+              elided = true;
+          }
+
+          if (elided) {
+              menuItem.action.text += "...";
+          }
+
+          menuItem.clicked.connect((function(i) {
+            // return function() { return print(taskList.children[i].labelText); };
+            return function() { return tasksModel.requestActivate(tasksModel.makeModelIndex(menu.visualParent.itemIndex, taskList.children[i].itemIndex)); };
+            //return function() { return print(_task.labelText); };
+          })(i));
+          menu.addMenuItem(menuItem, windowGroup)
+        }
+      }
     }
 
     function loadDynamicLaunchActions(launcherUrl) {
@@ -258,7 +300,7 @@ PlasmaComponents.ContextMenu {
     PlasmaComponents.MenuItem {
       id : windowGroup
       visible : menu.visualParent.childCount > 1
-      text: i18n("Windows List")
+      separator : true
 
       data: [
           VisualDataModel {
@@ -321,55 +363,9 @@ PlasmaComponents.ContextMenu {
               }
           }
       }
-
-      PlasmaComponents.ContextMenu {
-        id: windowGroupMenu
-        visualParent: windowGroup.action
-
-        function refresh() {
-          groupFilter.model = tasksModel;
-          groupFilter.rootIndex = tasksModel.makeModelIndex(menu.visualParent.itemIndex);
-          groupRepeater.model = groupFilter;
-          var menuItem
-          for (var i = 0; i < taskList.children.length - 1; ++i) {
-            // var _task = taskList.children[i];
-            menuItem = menu.newMenuItem(windowGroupMenu);
-            menuItem.text = taskList.children[i].labelText;
-
-            // QMenu does not limit its width automatically. Even if we set a maximumWidth
-            // it would just cut off text rather than eliding. So we do this manually.
-            var textMetrics = Qt.createQmlObject("import QtQuick 2.4; TextMetrics {}", menu);
-            var maximumWidth = LayoutManager.maximumContextMenuTextWidth();
-
-            // Crude way of manually eliding...
-            var elided = false;
-            textMetrics.text = Qt.binding(function() {
-                return menuItem.action.text;
-            });
-
-            while (textMetrics.width > maximumWidth) {
-                menuItem.action.text = menuItem.action.text.slice(0, -1);
-                elided = true;
-            }
-
-            if (elided) {
-                menuItem.action.text += "...";
-            }
-
-            menuItem.clicked.connect((function(i) {
-              // return function() { return print(taskList.children[i].labelText); };
-              return function() { return tasksModel.requestActivate(tasksModel.makeModelIndex(menu.visualParent.itemIndex, taskList.children[i].itemIndex)); };
-              //return function() { return print(_task.labelText); };
-            })(i));
-          }
-        }
-        Component.onCompleted: refresh()
-      }
     }
 
-    PlasmaComponents.MenuItem {
-        separator: true
-    }
+
 
     PlasmaComponents.MenuItem {
         id: virtualDesktopsMenuItem
