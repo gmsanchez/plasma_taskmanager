@@ -106,8 +106,15 @@ function activateTask(index, model, modifiers, task) {
             if (groupDialog.activeTask) {
               tasksModel.requestActivate(groupDialog.activeTask);
             } else {
-              groupDialog.visualParent = task;
-              groupDialog.visible = true;
+              /*groupDialog.visualParent = task;
+              groupDialog.visible = true;*/
+              print("leftclick");
+              activateNextPrevTask(model, 0)
+              /*var sourceName = mpris2Source.sourceNameForLauncherUrl(model.LauncherUrlWithoutIcon, model.AppPid);
+                if (sourceName) {
+                    
+                        mpris2Source.goPrevious(sourceName);
+                    }*/
             }
         }
     } else {
